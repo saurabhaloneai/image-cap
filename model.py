@@ -141,3 +141,20 @@ class DecoderRNN(nn.Module):
         h = self.init_h(mean_encoder_out)  # (batch_size, decoder_dim)
         c = self.init_c(mean_encoder_out)
         return h, c
+
+class EncoderDecoder(nn.Module):
+    def __init__(self,embed_size, vocab_size, attention_dim,encoder_dim,decoder_dim,drop_prob=0.3):
+        super().__init__()
+        self.encoder = EncoderCNN()
+        self.decoder = DecoderRNN(
+            embed_size=embed_size,
+            vocab_size = len(dataset.vocab),
+            attention_dim=attention_dim,
+            encoder_dim=encoder_dim,
+            decoder_dim=decoder_dim
+        )
+        
+    def forward(self, images, captions):
+        features = self.encoder(images)
+        outputs = self.decoder(features, captions)
+        return outputs
