@@ -1,4 +1,4 @@
-# image captioninggg 🐳
+# image captioningggg 🐳
 
 ## 1. Dataset 
 
@@ -6,5 +6,5 @@
 
 ## 3. Training 
 
-## 4. Inference `
+## 4. Inference 
 
