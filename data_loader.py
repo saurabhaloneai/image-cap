@@ -8,6 +8,7 @@ import torchvision.transforms as T
 import pandas as pd
 from PIL import Image
 import spacy
+import torchvision.transforms as transforms
 
 spacy_eng = spacy.load("en_core_web_sm") # for tokenization 
 
@@ -54,7 +55,7 @@ class Vocabulary:
     
 
 
-class FlickerDatasets(Dataset):
+class FlickrDataset(Dataset):
     
     def __init__(self,root_dir,captions_file,transform=None,freq_threshold=5):
         
@@ -104,19 +105,58 @@ class FlickerDatasets(Dataset):
 
 # adding PADDING to adjus the shapes
 
-class CapsCollate:
-  
-    def __init__(self,pad_idx,batch_first=False):
+class MyCollate:
+    def __init__(self, pad_idx):
         self.pad_idx = pad_idx
-        self.batch_first = batch_first
-    
-    def __call__(self,batch):
+
+    def __call__(self, batch):
         imgs = [item[0].unsqueeze(0) for item in batch]
-        imgs = torch.cat(imgs,dim=0)
-        
+        imgs = torch.cat(imgs, dim=0)
         targets = [item[1] for item in batch]
-        targets = pad_sequence(targets, batch_first=self.batch_first, padding_value=self.pad_idx)
-        return imgs,targets
-    
-    
-    
+        targets = pad_sequence(targets, batch_first=False, padding_value=self.pad_idx)
+
+        return imgs, targets
+
+
+def get_loader(
+    root_folder,
+    annotation_file,
+    transform,
+    batch_size=32,
+    num_workers=4,
+    shuffle=True,
+    pin_memory=True,
+):
+    dataset = FlickrDataset(root_folder, annotation_file, transform=transform)
+
+    pad_idx = dataset.vocab.stoi["<PAD>"]
+
+    loader = DataLoader(
+        dataset=dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        shuffle=shuffle,
+        pin_memory=pin_memory,
+        collate_fn=MyCollate(pad_idx=pad_idx),
+    )
+
+    return loader, dataset
+
+
+if __name__ == "__main__":
+    transform = transforms.Compose(
+        [
+            transforms.Resize((356, 356)),
+            transforms.RandomCrop((299, 299)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        ]
+    )
+
+    loader, dataset = get_loader(
+        "flickr8k/images/", "flickr8k/captions.txt", transform=transform
+    )
+
+    for idx, (imgs, captions) in enumerate(loader):
+        print(imgs.shape)
+        print(captions.shape)
