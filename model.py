@@ -158,3 +158,6 @@ class EncoderDecoder(nn.Module):
         features = self.encoder(images)
         outputs = self.decoder(features, captions)
         return outputs
+
+
+
