@@ -130,7 +130,7 @@ def forward(self, features, hidden_state):
 - these are the features extracted by the encoder, where `num_features` is the flattened spatial dimension (49 if the feature map is `7x7`), and `encoder_dim` is typically `2048`.
 - **hidden_state**: shape `(batch_size, decoder_dim)`. this is the current hidden state of the lstm decoder.
 
-** mapping to attention space:**
+**mapping to attention space:**
 
 - **self.u(features)**:
 
@@ -188,7 +188,7 @@ def forward(self, features, hidden_state):
   $$
   shape of `alpha`: `(batch_size, num_features)`. each value in `alpha` represents how much attention the model should give to each feature.
 
-** Atten Weights:
+**Atten Weights:**
 
 - **reshaping**: the attention weights `alpha` are reshaped with `.unsqueeze(2)` to match the shape of `features`.
 
