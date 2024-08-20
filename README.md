@@ -6,11 +6,13 @@
 
 ### ARC : 
 
-#### - Econder (resnet50)
-
-#### - Attention(block)
-
-#### - Deonder (lstms)
+> [!IMPORTANT]
+>
+> Econder(resnet50)
+>
+> Attention(block)
+>
+> Deonder(lstms)
 
 # EncoderCNN: 
 
