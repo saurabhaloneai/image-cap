@@ -208,3 +208,139 @@ def forward(self, features, hidden_state):
 
   2. **attention_weights**: the context vector, which combines the encoder features according to the attention weights.
 
+
+# DecoderRNN: 
+
+### Overview
+
+- the DecoderRNN gen captions for the given image features. 
+
+- it takes the attention-weighted context vectors from the Attn class and the pre-gen word to produce the next word in the sequence. 
+- it uses an LSTM (Long Short-Term Memory) to handle the text data(captions).
+
+```python
+class DecoderRNN(nn.Module):
+    def __init__(self, embed_size, attention_dim, encoder_dim, decoder_dim, drop_prob=0.3):
+        super().__init__()
+        self.attention = Attention(encoder_dim, decoder_dim, attention_dim)
+        # embedding layer using bert tokenizer vocabulary
+        self.embedding = nn.Embedding(len(BertTokenizer.from_pretrained('bert-base-uncased')), embed_size)
+        # initialize hidden and cell states
+        self.init_h = nn.Linear(encoder_dim, decoder_dim)  
+        self.init_c = nn.Linear(encoder_dim, decoder_dim)  
+        # lstm cell for sequence generation
+        self.lstm_cell = nn.LSTMCell(embed_size + encoder_dim, decoder_dim, bias=True)
+        # fc layer for output
+        self.fcn = nn.Linear(decoder_dim, self.embedding.num_embeddings)
+        self.drop = nn.Dropout(drop_prob)
+```
+
+- **Attention** : the attn is to focus on different parts of the image during caption generation.
+
+- **Embedding Layer** : it transforms input words (in token form) into dense vectors of size embed_size. 
+this layer uses the BERT tokenizer's vocabulary, which is loaded from the bert-base-uncased model.
+
+-**Hidden and Cell State Init**:
+  - self.init_h and self.init_c are linear layers that initialize the LSTM's hidden state (h) and cell state (c) based on the mean of the encoded image features.
+
+- **LSTM Cell** : The core of the decoder is an LSTM cell(handle sequential data)
+It takes both the embedded word vector and the context vector from the Attention as inputs.
+
+- **Fully Connected Layer**: the last linear layer (self.fcn) maps the LSTM's output to the vocabulary size, generating scores for each word in the vocabulary.
+
+- **Dropout**: it is applied to the LSTM output to prevent overfitting.(but still we overfit somehow-> need to use other tech also).
+
+
+### Forward Pass
+
+```python
+def forward(self, features, captions):
+    embeds = self.embedding(captions)
+    h, c = self.init_hidden_state(features)
+    seq_length = captions.size(1) - 1 
+    batch_size = captions.size(0)
+    num_features = features.size(1)
+    
+    # initialize tensors to store predictions and attention weights
+    preds = torch.zeros(batch_size, seq_length, self.embedding.num_embeddings).to(features.device)
+    alphas = torch.zeros(batch_size, seq_length, num_features).to(features.device)
+            
+    # generate sequence
+    for s in range(seq_length):
+        alpha, context = self.attention(features, h)
+        lstm_input = torch.cat((embeds[:, s], context), dim=1)
+        h, c = self.lstm_cell(lstm_input, (h, c))
+        output = self.fcn(self.drop(h))
+        preds[:, s] = output
+        alphas[:, s] = alpha  
+    
+    return preds, alphas
+```
+> brekaing into pieaces 
+
+**Input Shapes**:
+
+- features: Shape (batch_size, num_features, encoder_dim). These are the encoded image features passed from the encoder.
+
+- captions: Shape (batch_size, seq_length). These are the target captions, with each word represented as a token.
+
+**Word Embeddings**:
+
+- The input captions are passed through the embedding layer to convert each word token into a dense vector.
+
+- embeds=Embedding(captions)
+
+- shape of embeds: (batch_size, seq_length, embed_size).
+
+**Init Hidden and Cell States**:
+
+- Hidden State (h) and Cell State (c) are initialized using the mean of the image features.
+
+- h=init_h(mean(features))
+
+- shape of h and c: (batch_size, decoder_dim).
+
+**Loop Through Sequence**:
+
+- We iterate over each time step s in the sequence (except the last one, hence seq_length - 1).
+
+**Attention**:
+
+- At each time step, the attention mechanism computes the context vector based on the current hidden state and the image features.
+
+- Context Vector (context): It is the weighted sum of the image features
+- Attention Weights (alpha): They show the importance of each feature for the current word generation.
+- alpha,context=Attention(features,h)
+- Shape of context: (batch_size, encoder_dim).
+
+**LSTM Cell Input**:
+
+- The LSTM cell takes the concatenation of the current word's embedding (embeds[:, s]) and the context vector (context).
+
+- Concatenation: This combines the current word information and the relevant image features.
+- Shape of lstm_input: (batch_size, embed_size + encoder_dim).
+
+**LSTM Cell Update**:
+
+- The LSTM cell updates the hidden and cell states based on its input.
+
+- h,c=LSTMCell(lstm_input,(h,c))
+
+- Shape of h and c: (batch_size, decoder_dim).
+
+**Output Generation**:
+
+- The hidden state h is passed through a dropout layer and then through the fully connected layer self.fcn to generate the output scores for the next word.
+- Output (output): It contains the logits for each word in the vocabulary.
+
+- output=fcn(drop(h))
+- Shape of output: (batch_size, vocab_size).
+
+**Storing Predictions and Attention Weights**:
+
+- The output logits are stored in preds at the current time step s.
+- The attention weights alpha are stored in alphas for each time step.
+
+**Return**:
+
+- The model returns the predictions (preds) and the attention weights (alphas).
