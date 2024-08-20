@@ -50,6 +50,7 @@ def forward(self, images):
     features = features.permute(0, 2, 3, 1)                          
     features = features.view(features.size(0), -1, features.size(-1)) 
     return features
+```
 
 **Input**
 
