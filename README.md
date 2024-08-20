@@ -152,7 +152,7 @@ def forward(self, features, hidden_state):
 
   - math eqn : 
 
-    <p>$$ w_{ah} = w \times hidden\_state $$</p>
+    <p>$$w_{ah} = w \times hidden\_state $$</p>
 
     - `w` is a weight matrix of shape `(decoder_dim, attention_dim)`.
 
