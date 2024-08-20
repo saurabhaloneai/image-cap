@@ -31,7 +31,7 @@ class EncoderCNN(nn.Module):
         
         modules = list(resnet.children())[:-2]
         self.resnet = nn.Sequential(*modules)
-
+```
 
 - the EncoderCNN uses a ResNet-50 model that has been pre-trained on the ImageNet dataset.
 
