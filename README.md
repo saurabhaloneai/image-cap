@@ -137,22 +137,24 @@ def forward(self, features, hidden_state):
   - each feature from the encoder is passed through `self.u`, which maps it from the encoder dimension to the attention dimension.
 
   - if `attention_dim = 512`, this operation changes the shape of `features` to `(batch_size, num_features, attention_dim)`.
-  - mathematically: 
+
+  - math eqn : 
     
     <p>$$u_{hs} = u \times features$$</p>
 
-    where `u` is a weight matrix of shape `(encoder_dim, attention_dim)`.
+    - `u` is a weight matrix of shape `(encoder_dim, attention_dim)`.
 
 - **self.w(hidden_state)**:
 
   - the decoder’s hidden state is passed through `self.w`, mapping it from the decoder dimension to the attention dimension.
 
   - this changes the shape of `hidden_state` to `(batch_size, attention_dim)`.
-  - mathematically: 
-    $$
-    w_{ah} = w \times hidden\_state
-    $$
-    where `w` is a weight matrix of shape `(decoder_dim, attention_dim)`.
+
+  - math eqn : 
+
+    <p>$$ w_{ah} = w \times hidden\_state $$</p>
+
+    - `w` is a weight matrix of shape `(decoder_dim, attention_dim)`.
 
 **Combining**
 
@@ -160,21 +162,20 @@ def forward(self, features, hidden_state):
 
 - since `w_ah` has shape `(batch_size, attention_dim)`, we use `.unsqueeze(1)` to add an extra dimension so it can be added to `u_hs`.
 - **activation**: a tanh activation is applied to the combined result. this function adds non-linearity, allowing the model to learn complex relationships.
-- mathematically: 
-  $$
-  combined\_states = tanh(u\_hs + w\_ah)
-  $$
-  shape of `combined_states`: `(batch_size, num_features, attention_dim)`.
+- math eqn : 
+
+  <p>$$combined\_states = tanh(u\_hs + w\_ah)$$</p>
+
+  - shape of `combined_states`: `(batch_size, num_features, attention_dim)`.
 
 **Computing Attn Scores:**
 
 - **self.a(combined_states)**: the combined states are passed through `self.a`, which reduces the attention dimension to a single score for each feature.
 
-- mathematically: 
-  $$
-  attention\_scores = a \times combined\_states
-  $$
-  where `a` is a weight matrix of shape `(attention_dim, 1)`.
+- math eqn : 
+  <p>$$attention\_scores = a \times combined\_states$$</p>
+
+  - `a` is a weight matrix of shape `(attention_dim, 1)`.
   - shape of `attention_scores`: `(batch_size, num_features, 1)`.
   - the `squeeze(2)` operation removes the singleton dimension, giving `attention_scores` the shape `(batch_size, num_features)`.
 
@@ -182,22 +183,22 @@ def forward(self, features, hidden_state):
 
 - the attention scores are passed through a softmax function to normalize them into probabilities.
 
-- mathematically: 
-  $$
-  \alpha = softmax(attention\_scores)
-  $$
-  shape of `alpha`: `(batch_size, num_features)`. each value in `alpha` represents how much attention the model should give to each feature.
+- math eqn : 
+
+  <p>$$\alpha = softmax(attention\_scores)$$</p>
+
+  - shape of `alpha`: `(batch_size, num_features)`. each value in `alpha` represents how much attention the model should give to each feature.
 
 **Atten Weights:**
 
 - **reshaping**: the attention weights `alpha` are reshaped with `.unsqueeze(2)` to match the shape of `features`.
 
 - **weighted sum**: the features are multiplied by the attention weights and then summed over the spatial dimensions to produce the final attention-weighted context vector.
-- mathematically: 
-  $$
-  attention\_weights = \sum (\alpha \times features)
-  $$
-  shape of `attention_weights`: `(batch_size, encoder_dim)`. this vector is used by the decoder to generate the next word in the caption.
+- mathe eqn : 
+
+  <p>$$attention\_weights = \sum (\alpha \times features)$$</p>
+
+  - shape of `attention_weights`: `(batch_size, encoder_dim)`. this vector is used by the decoder to generate the next word in the caption.
 
 **Output**
 
