@@ -137,8 +137,10 @@ def forward(self, features, hidden_state):
   - each feature from the encoder is passed through `self.u`, which maps it from the encoder dimension to the attention dimension.
 
   - if `attention_dim = 512`, this operation changes the shape of `features` to `(batch_size, num_features, attention_dim)`.
-  - math-f:
-    $$u_{hs} = u \times features$$
+  - mathematically: 
+    
+    <p>$$u_{hs} = u \times features$$</p>
+
     where `u` is a weight matrix of shape `(encoder_dim, attention_dim)`.
 
 - **self.w(hidden_state)**:
