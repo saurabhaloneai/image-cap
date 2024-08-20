@@ -1,6 +1,6 @@
 #import 
-from model import EncoderDecoder
-from data_loader import train_loader
+from src.model import EncoderDecoder
+from src.data_loader import train_loader
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
