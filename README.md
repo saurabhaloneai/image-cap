@@ -121,16 +121,16 @@ def forward(self, features, hidden_state):
     attention_weights = attention_weights.sum(dim=1)  
     return alpha, attention_weights
 ```
-# breakign down the whole code of attn
+> breakign down the whole code of attn
 
-## input shapes:
+**Input Shapes:**
 
 - **features**: shape `(batch_size, num_features, encoder_dim)`. 
 
 - these are the features extracted by the encoder, where `num_features` is the flattened spatial dimension (49 if the feature map is `7x7`), and `encoder_dim` is typically `2048`.
 - **hidden_state**: shape `(batch_size, decoder_dim)`. this is the current hidden state of the lstm decoder.
 
-## mapping to attention space:
+** mapping to attention space:**
 
 - **self.u(features)**:
 
@@ -154,7 +154,7 @@ def forward(self, features, hidden_state):
     $$
     where `w` is a weight matrix of shape `(decoder_dim, attention_dim)`.
 
-## combining and activating:
+**Combining**
 
 - **combining**: the mapped features and hidden state are combined by adding them together. 
 
@@ -166,7 +166,7 @@ def forward(self, features, hidden_state):
   $$
   shape of `combined_states`: `(batch_size, num_features, attention_dim)`.
 
-## computing attention scores:
+**Computing Attn Scores:**
 
 - **self.a(combined_states)**: the combined states are passed through `self.a`, which reduces the attention dimension to a single score for each feature.
 
@@ -178,7 +178,7 @@ def forward(self, features, hidden_state):
   - shape of `attention_scores`: `(batch_size, num_features, 1)`.
   - the `squeeze(2)` operation removes the singleton dimension, giving `attention_scores` the shape `(batch_size, num_features)`.
 
-## softmax for attention weights:
+**Softmax For Attn Weights:** 
 
 - the attention scores are passed through a softmax function to normalize them into probabilities.
 
@@ -188,7 +188,7 @@ def forward(self, features, hidden_state):
   $$
   shape of `alpha`: `(batch_size, num_features)`. each value in `alpha` represents how much attention the model should give to each feature.
 
-## applying attention weights:
+** Atten Weights:
 
 - **reshaping**: the attention weights `alpha` are reshaped with `.unsqueeze(2)` to match the shape of `features`.
 
@@ -199,7 +199,7 @@ def forward(self, features, hidden_state):
   $$
   shape of `attention_weights`: `(batch_size, encoder_dim)`. this vector is used by the decoder to generate the next word in the caption.
 
-## output
+**Output**
 
 - the `attention` class returns two things:
 
