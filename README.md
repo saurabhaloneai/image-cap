@@ -344,3 +344,50 @@ def forward(self, features, captions):
 **Return**:
 
 - The model returns the predictions (preds) and the attention weights (alphas).
+
+
+# EncoderDecoder
+
+### Overview
+- The EncoderDecoder class combines the encoder (a CNN) and the decoder (an RNN with attention) into a unified model for image captioning. 
+The encoder extracts visual features from an image, and the decoder generates a descriptive caption based on these features.
+
+```python
+class EncoderDecoder(nn.Module):
+    def __init__(self, embed_size, attention_dim, encoder_dim, decoder_dim, drop_prob=0.3):
+        super().__init__()
+        self.encoder = EncoderCNN()
+        self.decoder = DecoderRNN(
+            embed_size=embed_size,
+            attention_dim=attention_dim,
+            encoder_dim=encoder_dim,
+            decoder_dim=decoder_dim,
+            drop_prob=drop_prob
+        )
+```
+- EncoderCNN: Extracts spatial features from the image using a pretrained ResNet50 model.
+
+- DecoderRNN: Generates captions using an attention mechanism to focus on different parts of the image, and an LSTM to sequentially predict the next word.
+
+### Forward Pass
+
+```python
+def forward(self, images, captions):
+    features = self.encoder(images)
+    outputs, alphas = self.decoder(features, captions)
+    return outputs, alphas
+```
+- Image Encoding: The encoder processes input images to produce feature maps.
+
+- Shape of features: (batch_size, num_features, encoder_dim).
+- Caption Generation: The decoder uses these features and the input captions to generate word predictions.
+
+- Outputs (outputs): Tensor of shape (batch_size, seq_length, vocab_size) containing predicted word scores.
+
+- Attention Weights (alphas): Tensor of shape (batch_size, seq_length, num_features) indicating where the model is focusing for each word.
+
+**Output**
+
+- outputs: Predicted captions for the images.
+
+- alphas: Attention weights showing the model's focus during word generation.
