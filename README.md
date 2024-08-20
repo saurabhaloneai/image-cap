@@ -6,7 +6,7 @@
 >  
 > ... this is why i build this image captioning model.
 >  
-> ... image -> image-cap-model -> caption (this is it)
+> ... image -> image-cap-model -> caption (it is like a langauge translation thing spanish(img) -> eng(cap))
 >
 > ... bye !!
 
@@ -18,14 +18,47 @@
 
 - it has around 8k images with it's corresponding captions.
 
-- but only use 5k.(gpu-poor)
+- but only used 5k.
 
 ## Data Loader 
 
-- 
+- this what a pre-precessing looks a like.
 
+```python 
+class ImageCaptionDataset(Dataset):
+    def __init__(self, root_dir, captions_file, tokenizer, transform=None):
+        self.root_dir = root_dir
+        self.captions_file = pd.read_csv(captions_file)
+        self.tokenizer = tokenizer
+        self.transform = transform
 
+    def __len__(self):
+        return len(self.captions_file)
 
+    def __getitem__(self, idx):
+        img_name = self.captions_file.iloc[idx, 0]
+        caption = self.captions_file.iloc[idx, 1]
+
+        img_path = f"{self.root_dir}/{img_name}"
+        image = Image.open(img_path).convert("RGB")
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        # Tokenize the caption
+        caption_tokens = self.tokenizer(caption, padding='max_length', max_length=30, truncation=True, return_tensors="pt")
+        caption_tensor = caption_tokens['input_ids'].squeeze()  # Remove extra dimension
+
+        return image, caption_tensor
+```
+
+- the repo i refer used spacy for tokenization(kinda old).
+
+- i updated with bert tokenizer.(due to it i need to change some code in model.py, train.py and inference.py).
+
+- for images everything stayes same(tranform -> didnt used flip or normalize).
+
+- then added some paadin with `custom_collate_fn` function. 
 
 ## Architecture
 
@@ -41,7 +74,7 @@
 
 ### Overview
 
-It uses a pre-trained (ResNet-50)[https://github.com/saurabhaloneai/History-of-Deep-Learning/blob/main/02-optimization-and-regularization/03-residuals/resnet.ipynb] network to extract features from images. these features are then passed to the decoder, which generates captions.
+It uses a pre-trained [ResNet-50](https://github.com/saurabhaloneai/History-of-Deep-Learning/blob/main/02-optimization-and-regularization/03-residuals/resnet.ipynb) network to extract features from images. these features are then passed to the decoder, which generates captions.
 
 
 ### initialization
@@ -334,8 +367,11 @@ def forward(self, features, captions):
 - at each time step, the attention mechanism computes the context vector based on the current hidden state and the image features.
 
 - Context Vector (context): It is the weighted sum of the image features
+
 - Attention Weights (alpha): it shows the importance of each feature for the current word generation.
-- alpha,context=Attention(features,h)
+
+- alpha,context=Attention(features,h).
+
 - Shape of context: (batch_size, encoder_dim).
 
 **LSTM Cell Input**:
@@ -412,3 +448,38 @@ def forward(self, images, captions):
 - Caption Generation: The decoder uses these features and the input captions to generate word predictions.
 
 - Outputs (outputs): Tensor of shape (batch_size, seq_length, vocab_size) containing predicted word scores.
+
+
+# Training 
+
+- i trained on two t4 from kaggle 
+
+- hyperparamters : 
+
+```pyhton 
+   embed_size=300
+   attention_dim=256
+   encoder_dim=2048
+   decoder_dim=512
+   learning_rate = 3e-4
+```
+
+- for 50 epochs on 5k data points.
+
+- optim -> Adam and loss_fn - > CrossEntropyLoss.
+
+```python 
+
+criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+```
+# Inference 
+
+- i waste lots of time here.
+
+- but got wokring in the end.
+
+- didn't use beam search for inference.
+
+
