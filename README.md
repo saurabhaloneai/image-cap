@@ -486,7 +486,7 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # heyyyyyyyyyyyyy hi 🐳 
 
-> [!MESSAGE]
+> [!NOTE]
 >
 > ... tbh i enjoyed building this and yeah will be building more stuff like this.
 > 
