@@ -480,8 +480,24 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 - i waste lots of time here.
 
-- but got wokring in the end.
+- but got it wokring in the end.
 
 - didn't use beam search for inference.
+
+# final word 
+
+tbh i enjoyed building this and yeah will be building more stuff like this.
+
+i learned lots stuff here and spin my head around lots of codebases, articles and papers.
+
+it was worth it.
+
+next goal will be to build image-cap with GPT2 and ViT and then with CLIP.
+
+bye bye bye 🐳 !!! 
+
+# Reference 
+
+
 
 
