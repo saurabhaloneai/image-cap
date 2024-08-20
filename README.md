@@ -130,17 +130,15 @@ def forward(self, features, hidden_state):
 - these are the features extracted by the encoder, where `num_features` is the flattened spatial dimension (49 if the feature map is `7x7`), and `encoder_dim` is typically `2048`.
 - **hidden_state**: shape `(batch_size, decoder_dim)`. this is the current hidden state of the lstm decoder.
 
-**mapping to attention space:**
+**Mapping to attention space:**
 
 - **self.u(features)**:
 
   - each feature from the encoder is passed through `self.u`, which maps it from the encoder dimension to the attention dimension.
 
   - if `attention_dim = 512`, this operation changes the shape of `features` to `(batch_size, num_features, attention_dim)`.
-  - mathematically: 
-    $$
-    u_{hs} = u \times features
-    $$
+  - math-f:
+    $$u_{hs} = u \times features$$
     where `u` is a weight matrix of shape `(encoder_dim, attention_dim)`.
 
 - **self.w(hidden_state)**:
