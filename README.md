@@ -1,6 +1,30 @@
 # image captioningggg 🐳
 
+> ![NOTE]
+>
+> ... i wanted to learn more about lstm and attention.
+> ... 
+> ... this is why i build this image captioning model.
+> ...
+> ... image -> image-cap-model -> caption (this is it)
+> ... bye !!
+
 ## Dataset 
+
+**Flickr8k**
+
+- this is the dataset taht i used to train the image-captioning model.
+
+- it has around 8k images with it's corresponding captions.
+
+- but only use 5k.(gpu-poor)
+
+## Data Loader 
+
+- 
+
+
+
 
 ## Architecture
 
@@ -240,11 +264,11 @@ class DecoderRNN(nn.Module):
 - **Embedding Layer** : it transforms input words (in token form) into dense vectors of size embed_size. 
 this layer uses the BERT tokenizer's vocabulary, which is loaded from the bert-base-uncased model.
 
--**Hidden and Cell State Init**:
+**Hidden and Cell State Init**:
+
   - self.init_h and self.init_c are linear layers that initialize the LSTM's hidden state (h) and cell state (c) based on the mean of the encoded image features.
 
-- **LSTM Cell** : The core of the decoder is an LSTM cell(handle sequential data)
-It takes both the embedded word vector and the context vector from the Attention as inputs.
+- **LSTM Cell** : handle sequential data and it takes both the embedded word vector and the context vector from the attn as inputs.
 
 - **Fully Connected Layer**: the last linear layer (self.fcn) maps the LSTM's output to the vocabulary size, generating scores for each word in the vocabulary.
 
@@ -280,13 +304,13 @@ def forward(self, features, captions):
 
 **Input Shapes**:
 
-- features: Shape (batch_size, num_features, encoder_dim). These are the encoded image features passed from the encoder.
+- features: Shape (batch_size, num_features, encoder_dim) - > these are the encoded image features passed from the encoder.
 
-- captions: Shape (batch_size, seq_length). These are the target captions, with each word represented as a token.
+- captions: Shape (batch_size, seq_length) - > these are the target captions, with each word represented as a token.
 
 **Word Embeddings**:
 
-- The input captions are passed through the embedding layer to convert each word token into a dense vector.
+- the input captions are passed through the embedding layer to convert each word token into vector.
 
 - embeds=Embedding(captions)
 
@@ -302,43 +326,47 @@ def forward(self, features, captions):
 
 **Loop Through Sequence**:
 
-- We iterate over each time step s in the sequence (except the last one, hence seq_length - 1).
+- we iterate over each time step s in the sequence (except the last one, hence seq_length - 1).
 
 **Attention**:
 
-- At each time step, the attention mechanism computes the context vector based on the current hidden state and the image features.
+- at each time step, the attention mechanism computes the context vector based on the current hidden state and the image features.
 
 - Context Vector (context): It is the weighted sum of the image features
-- Attention Weights (alpha): They show the importance of each feature for the current word generation.
+- Attention Weights (alpha): it shows the importance of each feature for the current word generation.
 - alpha,context=Attention(features,h)
 - Shape of context: (batch_size, encoder_dim).
 
 **LSTM Cell Input**:
 
-- The LSTM cell takes the concatenation of the current word's embedding (embeds[:, s]) and the context vector (context).
+- the LSTM cell takes the concatenation of the current word's embedding (embeds[:, s]) and the context vector (context).
 
-- Concatenation: This combines the current word information and the relevant image features.
-- Shape of lstm_input: (batch_size, embed_size + encoder_dim).
+- concatenation: This combines the current word information + relevant image features.
+
+- shape of lstm_input: (batch_size, embed_size + encoder_dim).
 
 **LSTM Cell Update**:
 
 - The LSTM cell updates the hidden and cell states based on its input.
 
-- h,c=LSTMCell(lstm_input,(h,c))
+- `h,c = LSTMCell(lstm_input,(h,c))`
 
-- Shape of h and c: (batch_size, decoder_dim).
+- Shape of `h and c` : `(batch_size, decoder_dim)`.
 
 **Output Generation**:
 
-- The hidden state h is passed through a dropout layer and then through the fully connected layer self.fcn to generate the output scores for the next word.
+- The hidden state h is passed through a dropout layer and then through the fully connected layer `self.fcn` to generate the output scores for the next word.
+
 - Output (output): It contains the logits for each word in the vocabulary.
 
 - output=fcn(drop(h))
+
 - Shape of output: (batch_size, vocab_size).
 
 **Storing Predictions and Attention Weights**:
 
 - The output logits are stored in preds at the current time step s.
+
 - The attention weights alpha are stored in alphas for each time step.
 
 **Return**:
@@ -349,8 +377,10 @@ def forward(self, features, captions):
 # EncoderDecoder
 
 ### Overview
-- The EncoderDecoder class combines the encoder (a CNN) and the decoder (an RNN with attention) into a unified model for image captioning. 
-The encoder extracts visual features from an image, and the decoder generates a descriptive caption based on these features.
+
+- it combines the encoder `(CNN) + decoder (an RNN with attention)` to gen image captioning. 
+
+- as we encoder handle the image side and decoder handle the text side. 
 
 ```python
 class EncoderDecoder(nn.Module):
@@ -365,9 +395,6 @@ class EncoderDecoder(nn.Module):
             drop_prob=drop_prob
         )
 ```
-- EncoderCNN: Extracts spatial features from the image using a pretrained ResNet50 model.
-
-- DecoderRNN: Generates captions using an attention mechanism to focus on different parts of the image, and an LSTM to sequentially predict the next word.
 
 ### Forward Pass
 
@@ -380,14 +407,7 @@ def forward(self, images, captions):
 - Image Encoding: The encoder processes input images to produce feature maps.
 
 - Shape of features: (batch_size, num_features, encoder_dim).
+
 - Caption Generation: The decoder uses these features and the input captions to generate word predictions.
 
 - Outputs (outputs): Tensor of shape (batch_size, seq_length, vocab_size) containing predicted word scores.
-
-- Attention Weights (alphas): Tensor of shape (batch_size, seq_length, num_features) indicating where the model is focusing for each word.
-
-**Output**
-
-- outputs: Predicted captions for the images.
-
-- alphas: Attention weights showing the model's focus during word generation.
