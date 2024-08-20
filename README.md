@@ -6,7 +6,9 @@
 >  
 > ... this is why i build this image captioning model.
 >  
-> ... image -> image-cap-model -> caption (it is like a langauge translation thing spanish(img) -> eng(cap))
+> ... image -> image-cap-model -> caption. 
+>
+> ... it is like a langauge translation thing spanish(img) -> eng(cap).
 >
 > ... bye !!
 
