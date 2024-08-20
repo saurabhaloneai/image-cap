@@ -1,13 +1,14 @@
 # image captioningggg 🐳
 
->  [!NOTE]
+> [!NOTE]
 >
->  ... i wanted to learn more about lstm and attention.
->  ... 
->  ... this is why i build this image captioning model.
->  ...
->  ... image -> image-cap-model -> caption (this is it)
->  ... bye !!
+> ... i wanted to learn more about lstm and attention.
+>  
+> ... this is why i build this image captioning model.
+>  
+> ... image -> image-cap-model -> caption (this is it)
+>
+> ... bye !!
 
 ## Dataset 
 
