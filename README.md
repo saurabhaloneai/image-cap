@@ -1,6 +1,6 @@
 # image captioningggg 🐳
 
-> ![NOTE]
+> [!NOTE]
 >
 > ... i wanted to learn more about lstm and attention.
 > ... 
