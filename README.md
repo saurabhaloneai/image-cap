@@ -72,6 +72,10 @@ class ImageCaptionDataset(Dataset):
 >
 > Deonder(lstms)
 
+
+![img](images/image-cap.png)
+
+
 # EncoderCNN: 
 
 ### Overview
