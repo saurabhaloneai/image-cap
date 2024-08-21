@@ -9,7 +9,11 @@
 > ... image -> image-cap-model -> caption. 
 >
 
-![exp](images/ghibli.jpg)
+
+<p align="center">
+  <img src="images/ghibli.jpg" alt="exp" />
+</p>
+
 
 <p> caption : a person peacefully lies in a sunlit, flower-filled meadow surrounded by a serene forest, reminiscent of Studio Ghibli's enchanting landscapes.</p>
 
