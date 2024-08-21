@@ -121,11 +121,27 @@ class EncoderCNN(nn.Module):
 
 - the EncoderCNN uses a ResNet-50 model that has been pre-trained on the ImageNet dataset.
 
-- we freeze its parameters so they don't change during training. 
+- why pretrained cuase it already train on large dataset due it faster converge and improve performance on specific tasks with limited data.
 
-- this way, ResNet-50 can focus on extracting useful features from the input images.(and also we don't need to trian it from scrath)
+```python
+resnet = models.resnet50(pretrained=True)
+``` 
+
+
+- we freeze its parameters so they don't change during training.(cuase we are not trianing it, we only do the forward pass)
+
+- this way, ResNet-50 can focus on extracting useful features from the input images.
+
+```python
+for param in resnet.parameters():
+            param.requires_grad_(False)
+```
 
 - after that we remove the last layers of ResNet-50, which are designed for classification, because we only need the feature maps, not the classification output.
+
+```python 
+ modules = list(resnet.children())[:-2]
+```
 
 ### forward pass 
 
