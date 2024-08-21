@@ -82,6 +82,7 @@ class ImageCaptionDataset(Dataset):
 
 It uses a pre-trained [ResNet-50](https://github.com/saurabhaloneai/History-of-Deep-Learning/blob/main/02-optimization-and-regularization/03-residuals/resnet.ipynb) network to extract features from images. these features are then passed to the decoder, which generates captions.
 
+![encoder](images/Encoder.png)
 
 ### initialization
 
@@ -150,6 +151,9 @@ def forward(self, images):
 - the Attn is used in decoder and it focus on different parts of the image while generating captions. 
 
 - it calculates attention scores that tell the model which parts of the image to pay more attention to at each step in the caption gen process.
+
+![attn](images/attention.png)
+
 
 ```python
 class Attention(nn.Module):
@@ -281,6 +285,9 @@ def forward(self, features, hidden_state):
 
 - it takes the attention-weighted context vectors from the Attn class and the pre-gen word to produce the next word in the sequence. 
 - it uses an LSTM (Long Short-Term Memory) to handle the text data(captions).
+
+
+![decoder](images/decoder.png)
 
 ```python
 class DecoderRNN(nn.Module):
