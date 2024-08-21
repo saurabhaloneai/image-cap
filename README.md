@@ -291,7 +291,7 @@ which represent the relevance of each feature for the current decoder hidden sta
 
 * atten_score are calculated :
 
-$$score_{ij} = v_a^T \tanh(U_a h_{t-1} + W_a h_j)$$
+$score_{ij} = v_a^T \tanh(U_a h_{t-1} + W_a h_j)$
 where:
 
 h_{t-1}: Decoder's hidden state at time t-1
