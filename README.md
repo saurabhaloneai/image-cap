@@ -117,6 +117,13 @@ class EncoderCNN(nn.Module):
         
         modules = list(resnet.children())[:-2]
         self.resnet = nn.Sequential(*modules)
+
+    def forward(self, images):
+        features = self.resnet(images)                                   
+        # reshape features for attention
+        features = features.permute(0, 2, 3, 1)                          
+        features = features.view(features.size(0), -1, features.size(-1)) 
+        return features
 ```
 
 - the EncoderCNN uses a ResNet-50 model that has been pre-trained on the ImageNet dataset.
@@ -143,16 +150,7 @@ for param in resnet.parameters():
  modules = list(resnet.children())[:-2]
 ```
 
-### forward pass 
-
-```python 
-def forward(self, images):
-    features = self.resnet(images)                                   
-    # reshape features for attention
-    features = features.permute(0, 2, 3, 1)                          
-    features = features.view(features.size(0), -1, features.size(-1)) 
-    return features
-```
+### forward pass
 
 **Input**
 
@@ -166,6 +164,10 @@ def forward(self, images):
 
 - 2048 is the number of features, and 7x7 is the reduced spatial size of the image.
 
+```python 
+features = self.resnet(images)  
+```
+
 **Reshaping for Attention** 
 
 - we then rearrange the dimensions so the spatial information comes first. 
@@ -176,15 +178,24 @@ def forward(self, images):
 
 - the output shape becomes `(batch_size, 49, 2048)`. `49` is `7x7`, and `2048` is the number of features.
 
-**Output**
+```python 
+features = features.permute(0, 2, 3, 1)                          
+features = features.view(features.size(0), -1, features.size(-1))
+```
 
 - the final output is a feature tensor with shape `(batch_size, num_features, encoder_dim)`, which is passed to the decoder.
+
+> but why cnn based resnet work ? read more [here](https://end-to-end-machine-learning.teachable.com/courses/321-convolutional-neural-networks/lectures/14555482).
 
 # Attention: 
 
 ### Overview
 
-- the Attn is used in decoder and it focus on different parts of the image while generating captions. 
+
+> what is attention ?
+
+- Attention is a mechanism that allows the model to selectively focus on the most relevant parts of the input (image features) 
+when generating each output (word in the caption).
 
 - it calculates attention scores that tell the model which parts of the image to pay more attention to at each step in the caption gen process.
 
@@ -200,7 +211,23 @@ class Attention(nn.Module):
         self.W = nn.Linear(decoder_dim, attention_dim)
         self.U = nn.Linear(encoder_dim, attention_dim)
         self.A = nn.Linear(attention_dim, 1)
+
+    def forward(self, features, hidden_state):
+        u_hs = self.U(features)     
+        w_ah = self.W(hidden_state) 
+        combined_states = torch.tanh(u_hs + w_ah.unsqueeze(1)) 
+        attention_scores = self.A(combined_states)        
+        attention_scores = attention_scores.squeeze(2)    
+        alpha = F.softmax(attention_scores, dim=1)    # attention_weight      
+        # apply attention weights to features
+        attention_weights = features * alpha.unsqueeze(2)  
+        attention_weights = attention_weights.sum(dim=1)  
+        return alpha, attention_weights
+
 ```
+
+**what is attention ?**
+
 - the Atten uses three linear layers.(it uses this to cal attention scores.) 
 
 - **self.W**: takes the hidden state of the decoder `(decoder_dim)` and maps it to the attention space `(attention_dim)`.
@@ -209,31 +236,80 @@ class Attention(nn.Module):
 
 - **self.A**: reduces the combined attention space to a single value -> attention_score.
 
-
-### Forward Pass
-
-```python
-def forward(self, features, hidden_state):
-    u_hs = self.U(features)     
-    w_ah = self.W(hidden_state) 
-    combined_states = torch.tanh(u_hs + w_ah.unsqueeze(1)) 
-    attention_scores = self.A(combined_states)        
-    attention_scores = attention_scores.squeeze(2)    
-    alpha = F.softmax(attention_scores, dim=1)    # attention_weight      
-    # apply attention weights to features
-    attention_weights = features * alpha.unsqueeze(2)  
-    attention_weights = attention_weights.sum(dim=1)  
-    return alpha, attention_weights
+```python 
+self.W = nn.Linear(decoder_dim, attention_dim)
+self.U = nn.Linear(encoder_dim, attention_dim)
+self.A = nn.Linear(attention_dim, 1)
 ```
 
 
-**Input Shapes:**
 
-- **features**: shape `(batch_size, num_features, encoder_dim)`. 
+### Forward Pass
 
-- these are the features extracted by the encoder, where `num_features` is the flattened dim (49 if the feature map is `7x7`), and `encoder_dim` is `2048`.
+**Input**
 
-- **hidden_state**: shape `(batch_size, decoder_dim)` -> (current hidden state of the lstm decoder).
+- the attention mechanism takes two inputs: the image features `(encoder output)` and the current hidden state of the decoder.
+
+- the image features have a shape of (batch_size, 49, encoder_dim) -> `49` is the flattened dim of the feature maps, and the hidden state has a shape of (batch_size, decoder_dim).
+
+```pyhton 
+def forward(self, features, hidden_state):
+```
+
+**computation**
+
+- first the image features `(features)` and the decoder hidden state `(hidden_state)`are passed through the linear layer using the `self.U` 
+and `self.W` layers, respectively, to produce u_hs and w_ah of shape `(batch_size, 49, attention_dim)`
+
+```pyhton 
+u_hs = self.U(features)     
+w_ah = self.W(hidden_state)
+```
+
+- we `w_ah.unsqueeze(1)` cuase w_ah has shape (batch_size, attention_dim), we use .unsqueeze(1) to add an extra dimension so it can be added to u_hs.
+
+- after passing through linear layer the features and hidden state are combined using element-wise addition and 
+passed through the tanh activation function to produce combined_states of shape `(batch_size, 49, attention_dim)`.
+
+- the combined_states are then passed through the self.A linear layer to calculate the 'attention scores` - > shape `(batch_size, 49, 1)`
+
+- then we squeezed to remove the singleton dimension to convert it to -> (batch_size, 49)
+
+
+```python 
+combined_states = torch.tanh(u_hs + w_ah.unsqueeze(1)) # combined 
+attention_scores = self.A(combined_states)             # self.A
+attention_scores = attention_scores.squeeze(2)         # remove (batch_size, 49,`1`)
+```
+
+**Softmax** 
+
+- the attention scores are passed through a softmax function to normalize them into probabilities.
+
+- the attention scores are then passed through the softmax function along the feature dimension to compute the attention weights (alpha), 
+which represent the relevance of each feature for the current decoder hidden state.
+
+* atten_score are calculated :
+
+$$score_{ij} = v_a^T \tanh(U_a h_{t-1} + W_a h_j)$$
+where:
+
+h_{t-1}: Decoder's hidden state at time t-1
+h_j: Encoder's output (feature maps)
+U_a, W_a: Learnable parameter matrices
+v_a: Learnable parameter vector
+
+
+- attention weights atten_weights are computed by applying softmax to the attention scores:
+
+$$\alpha_{ij} = \frac{\exp(score_{ij})}{\sum_k \exp(score_{ik})}$$
+
+The context vector c_t is the weighted sum of the encoder output features:
+
+$$c_t = \sum_j \alpha_{ij} h_j$$
+
+
+
 
 **Mapping to attention space:**
 
@@ -243,11 +319,7 @@ def forward(self, features, hidden_state):
 
   - if `attention_dim = 512`, this operation changes the shape of `features` to `(batch_size, num_features, attention_dim)`.
 
-  - math eqn : 
-    
-    <p>$$u_{hs} = u \times features$$</p>
-
-    - `u` is a weight matrix of shape `(encoder_dim, attention_dim)`.
+ 
 
 - **self.w(hidden_state)**:
 
@@ -255,23 +327,12 @@ def forward(self, features, hidden_state):
 
   - this changes the shape of `hidden_state` to `(batch_size, attention_dim)`.
 
-  - math eqn : 
-
-    <p>$$w_{ah} = w \times hidden\_state $$</p>
-
-    - `w` is a weight matrix of shape `(decoder_dim, attention_dim)`.
-
 **Combining**
 
 - **combining**: the mapped features and hidden state are combined by adding them together. 
 
 - since `w_ah` has shape `(batch_size, attention_dim)`, we use `.unsqueeze(1)` to add an extra dimension so it can be added to `u_hs`.
 - **activation**: a tanh activation is applied to the combined result. this function adds non-linearity, allowing the model to learn complex relationships.
-- math eqn : 
-
-  <p>$$combined\_states = tanh(u\_hs + w\_ah)$$</p>
-
-  - shape of `combined_states`: `(batch_size, num_features, attention_dim)`.
 
 **Computing Attn Scores:**
 
