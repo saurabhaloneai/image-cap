@@ -250,7 +250,7 @@ self.A = nn.Linear(attention_dim, 1)
 
 - the image features have a shape of (batch_size, 49, encoder_dim) -> `49` is the flattened dim of the feature maps, and the hidden state has a shape of (batch_size, decoder_dim).
 
-```pyhton 
+```python 
 def forward(self, features, hidden_state):
 ```
 
@@ -259,7 +259,7 @@ def forward(self, features, hidden_state):
 - first the image features `(features)` and the decoder hidden state `(hidden_state)`are passed through the linear layer using the `self.U` 
 and `self.W` layers, respectively, to produce u_hs and w_ah of shape `(batch_size, 49, attention_dim)`
 
-```pyhton 
+```python 
 u_hs = self.U(features)     
 w_ah = self.W(hidden_state)
 ```
