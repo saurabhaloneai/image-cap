@@ -1,28 +1,44 @@
 # image captioningggg 🐳
 
 > [!NOTE]
->
-> ... i wanted to learn more about lstm and attention.
 >  
-> ... this is why i build this image captioning model.
->  
+> ... wanted to understand more about cnn, lstm and attention.
+> 
+> ... this is why i decided to build image-captioning genrator
+> 
 > ... image -> image-cap-model -> caption. 
 >
-> ... it is like a langauge translation thing spanish(img) -> eng(cap).
->
-> ... bye !!
+
+![exp](images/ghibli.jpg)
+
+<p> caption : a person peacefully lies in a sunlit, flower-filled meadow surrounded by a serene forest, reminiscent of Studio Ghibli's enchanting landscapes.</p>
+
+> note : this caption was gen by gpt.(ik i should go with latest models but i just i wanted build with this and definetly in future will build with new models).
+
+
+
+# introduction 
+
+- the image-caption-model will do the one simple thing.
+
+- you input the image in model and it generate captions(basically described the image).
+
+- it is like a langauage translation, in translation u input a text in one langauage and it convert it to another langauage.
+
+- instead of langauage we have image that get converted into captions.
+
+- to buiild i am sticking with cnn+lstm+attention arc and flickr8k dataset.
+
 
 ## Dataset 
 
 **Flickr8k**
 
-- this is the dataset taht i used to train the image-captioning model.
-
 - it has around 8k images with it's corresponding captions.
 
-- but only used 5k.
+- but im using only 5k.
 
-## Data Loader 
+### Data Loader 
 
 - this what a pre-precessing looks a like.
 
@@ -58,19 +74,19 @@ class ImageCaptionDataset(Dataset):
 
 - i updated with bert tokenizer.(due to it i need to change some code in model.py, train.py and inference.py).
 
-- for images everything stayes same(tranform -> didnt used flip or normalize).
+- for images everything stays same(tranform -> didnt used flip or normalize).
 
-- then added some paadin with `custom_collate_fn` function. 
+- then added some paading with `custom_collate_fn` function. 
 
 ## Architecture
 
 > [!IMPORTANT]
 >
-> Econder(resnet50)
+> Econder(resnet50) -> hels in extracting the features(info) from the images.
 >
-> Attention(block)
+> Attention(block) -> helps in focusing on imp parts of images w.r.t captions.
 >
-> Deonder(lstms)
+> Deonder(lstms) -> gen captions for the given image features.
 
 
 ![img](images/image-cap.png)
@@ -80,7 +96,7 @@ class ImageCaptionDataset(Dataset):
 
 ### Overview
 
-It uses a pre-trained [ResNet-50](https://github.com/saurabhaloneai/History-of-Deep-Learning/blob/main/02-optimization-and-regularization/03-residuals/resnet.ipynb) network to extract features from images. these features are then passed to the decoder, which generates captions.
+It uses a pre-trained [ResNet-50](https://github.com/saurabhaloneai/History-of-Deep-Learning/blob/main/02-optimization-and-regularization/03-residuals/resnet.ipynb) to extract features from images. these features are then passed to the decoder, which generates captions.
 
 ![encoder](images/Encoder.png)
 
@@ -189,20 +205,21 @@ def forward(self, features, hidden_state):
     attention_weights = attention_weights.sum(dim=1)  
     return alpha, attention_weights
 ```
-> breakign down the whole code of attn
+
 
 **Input Shapes:**
 
 - **features**: shape `(batch_size, num_features, encoder_dim)`. 
 
-- these are the features extracted by the encoder, where `num_features` is the flattened spatial dimension (49 if the feature map is `7x7`), and `encoder_dim` is typically `2048`.
-- **hidden_state**: shape `(batch_size, decoder_dim)`. this is the current hidden state of the lstm decoder.
+- these are the features extracted by the encoder, where `num_features` is the flattened dim (49 if the feature map is `7x7`), and `encoder_dim` is (in most of arc) `2048`.
+
+- **hidden_state**: shape `(batch_size, decoder_dim)` -> (current hidden state of the lstm decoder).
 
 **Mapping to attention space:**
 
 - **self.u(features)**:
 
-  - each feature from the encoder is passed through `self.u`, which maps it from the encoder dimension to the attention dimension.
+  - each feature from the encoder is passed through `self.u`, which maps it from the encoder dim to the attention dim.
 
   - if `attention_dim = 512`, this operation changes the shape of `features` to `(batch_size, num_features, attention_dim)`.
 
@@ -347,7 +364,7 @@ def forward(self, features, captions):
     
     return preds, alphas
 ```
-> brekaing into pieaces 
+
 
 **Input Shapes**:
 
