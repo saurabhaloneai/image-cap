@@ -4,7 +4,7 @@
 >  
 > ... wanted to understand more about cnn, lstm and attention.
 > 
-> ... this is why i decided to build image-captioning genrator
+> ... this is why i decided to build image-captioning model.
 > 
 > ... image -> image-cap-model -> caption. 
 >
@@ -191,7 +191,7 @@ class Attention(nn.Module):
 
 - **self.U**: takes the features from the encoder `(encoder_dim)` and also maps them to the attention space `(attention_dim)`.
 
-- **self.A**: reduces the combined attention space to a single value, which will represent the attention score.
+- **self.A**: reduces the combined attention space to a single value -> attention_score.
 
 
 ### Forward Pass
@@ -215,7 +215,7 @@ def forward(self, features, hidden_state):
 
 - **features**: shape `(batch_size, num_features, encoder_dim)`. 
 
-- these are the features extracted by the encoder, where `num_features` is the flattened dim (49 if the feature map is `7x7`), and `encoder_dim` is (in most of arc) `2048`.
+- these are the features extracted by the encoder, where `num_features` is the flattened dim (49 if the feature map is `7x7`), and `encoder_dim` is `2048`.
 
 - **hidden_state**: shape `(batch_size, decoder_dim)` -> (current hidden state of the lstm decoder).
 
