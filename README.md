@@ -226,8 +226,6 @@ class Attention(nn.Module):
 
 ```
 
-**what is attention ?**
-
 - the Atten uses three linear layers.(it uses this to cal attention scores.) 
 
 - **self.W**: takes the hidden state of the decoder `(decoder_dim)` and maps it to the attention space `(attention_dim)`.
@@ -289,15 +287,16 @@ attention_scores = attention_scores.squeeze(2)         # remove (batch_size, 49,
 - the attention scores are then passed through the softmax function along the feature dimension to compute the attention weights (alpha), 
 which represent the relevance of each feature for the current decoder hidden state.
 
-* atten_score are calculated :
+> Calculation of atten_score in detail :
 
 $score_{ij} = v_a^T \tanh(U_a h_{t-1} + W_a h_j)$
-where:
 
-h_{t-1}: Decoder's hidden state at time t-1
-h_j: Encoder's output (feature maps)
-U_a, W_a: Learnable parameter matrices
-v_a: Learnable parameter vector
+- where:
+
+  - h_{t-1}: Decoder's hidden state at time t-1
+  - h_j: Encoder's output (feature maps)
+  - U_a, W_a: Learnable parameter matrices
+  - v_a: Learnable parameter vector
 
 
 - attention weights atten_weights are computed by applying softmax to the attention scores:
@@ -308,71 +307,35 @@ The context vector c_t is the weighted sum of the encoder output features:
 
 $$c_t = \sum_j \alpha_{ij} h_j$$
 
+```python
+alpha = F.softmax(attention_scores, dim=1) 
+```
 
+- alpha are used to apply a weighted sum of the image features. 
 
+- and also we need unsqueezed to match the feature dimension -> shape (batch_size, 49, 1).
 
-**Mapping to attention space:**
+- alpha are multiplied element-wise with the image features resulting ->  attention_weights of shape (batch_size, 49, encoder_dim).
 
-- **self.u(features)**:
+- alpha are then summed along the feature dimension to produce the attention context -> shape of (batch_size, encoder_dim).
 
-  - each feature from the encoder is passed through `self.u`, which maps it from the encoder dim to the attention dim.
-
-  - if `attention_dim = 512`, this operation changes the shape of `features` to `(batch_size, num_features, attention_dim)`.
-
- 
-
-- **self.w(hidden_state)**:
-
-  - the decoder’s hidden state is passed through `self.w`, mapping it from the decoder dimension to the attention dimension.
-
-  - this changes the shape of `hidden_state` to `(batch_size, attention_dim)`.
-
-**Combining**
-
-- **combining**: the mapped features and hidden state are combined by adding them together. 
-
-- since `w_ah` has shape `(batch_size, attention_dim)`, we use `.unsqueeze(1)` to add an extra dimension so it can be added to `u_hs`.
-- **activation**: a tanh activation is applied to the combined result. this function adds non-linearity, allowing the model to learn complex relationships.
-
-**Computing Attn Scores:**
-
-- **self.a(combined_states)**: the combined states are passed through `self.a`, which reduces the attention dimension to a single score for each feature.
-
-- math eqn : 
-  <p>$$attention\_scores = a \times combined\_states$$</p>
-
-  - `a` is a weight matrix of shape `(attention_dim, 1)`.
-  - shape of `attention_scores`: `(batch_size, num_features, 1)`.
-  - the `squeeze(2)` operation removes the singleton dimension, giving `attention_scores` the shape `(batch_size, num_features)`.
-
-**Softmax For Attn Weights:** 
-
-- the attention scores are passed through a softmax function to normalize them into probabilities.
-
-- math eqn : 
-
-  <p>$$\alpha = softmax(attention\_scores)$$</p>
-
-  - shape of `alpha`: `(batch_size, num_features)`. each value in `alpha` represents how much attention the model should give to each feature.
-
-**Atten Weights:**
-
-- **reshaping**: the attention weights `alpha` are reshaped with `.unsqueeze(2)` to match the shape of `features`.
-
-- **weighted sum**: the features are multiplied by the attention weights and then summed over the spatial dimensions to produce the final attention-weighted context vector.
-- mathe eqn : 
-
-  <p>$$attention\_weights = \sum (\alpha \times features)$$</p>
-
-  - shape of `attention_weights`: `(batch_size, encoder_dim)`. this vector is used by the decoder to generate the next word in the caption.
+```python
+# apply attention weights to features
+attention_weights = features * alpha.unsqueeze(2)  
+attention_weights = attention_weights.sum(dim=1)
+```
 
 **Output**
 
-- the `attention` class returns two things:
+- the attention class returns two things:
 
-  1. **alpha**: the attention weights, which show where the model is focusing its attention.
+  - alpha: the attention weights, which show where the model is focusing its attention.
+  
+  - attention_weights: the context vector, which combines the encoder features according to the attention weights.
 
-  2. **attention_weights**: the context vector, which combines the encoder features according to the attention weights.
+```python
+return alpha, attention_weights
+```
 
 
 # DecoderRNN: 
