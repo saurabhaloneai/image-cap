@@ -46,6 +46,8 @@
 
 - this what a pre-precessing looks a like.
 
+**Code-Data_loader**
+
 ```python 
 class ImageCaptionDataset(Dataset):
     def __init__(self, root_dir, captions_file, tokenizer, transform=None):
@@ -86,14 +88,33 @@ class ImageCaptionDataset(Dataset):
 
 > [!IMPORTANT]
 >
-> Econder(resnet50) -> hels in extracting the features(info) from the images.
+> Encoder(resnet50) -> hels in extracting the features(info) from the images.
 >
 > Attention(block) -> helps in focusing on imp parts of images w.r.t captions.
 >
-> Deonder(lstms) -> gen captions for the given image features.
+> Decoder(lstms) -> gen captions for the given image features.
 
 
 ![img](images/image-cap.png)
+
+**Input Flow in short:**
+
+- Image → EncoderCNN -> Image Features
+
+- Image Features -> Initialize Decoder States
+
+- for each word position: 
+
+- Previous Word (or start token) -> Word Embedding
+
+- Current Hidden State + Image Features -> Attention -> Context Vector
+
+- Word Embedding + Context Vector -> LSTM Cell -> Updated Hidden State
+
+- Updated Hidden State -> Fully Connected Layer -> Word Prediction
+
+
+Repeat step 3 until end token is predicted or maximum length is reached
 
 
 # EncoderCNN: 
@@ -104,7 +125,7 @@ It uses a pre-trained [ResNet-50](https://github.com/saurabhaloneai/History-of-D
 
 ![encoder](images/Encoder.png)
 
-### initialization
+**Code-Encoder**
 
 ```python
 class EncoderCNN(nn.Module):
@@ -201,6 +222,7 @@ when generating each output (word in the caption).
 
 ![attn](images/attention.png)
 
+**Code-Attention**
 
 ```python
 class Attention(nn.Module):
@@ -340,6 +362,11 @@ return alpha, attention_weights
 ```
 - read more about attention [here](https://lilianweng.github.io/posts/2018-06-24-attention/)
 
+
+
+
+
+
 # DecoderRNN: 
 
 ### Overview
@@ -347,8 +374,12 @@ return alpha, attention_weights
 - the DecoderRNN gen captions for the given image features. 
 
 - it takes the attention-weighted context vectors from the Attn class and the pre-gen word to produce the next word in the sequence. 
+
 - it uses an LSTM (Long Short-Term Memory) to handle the text data(captions).
 
+- lets formalize this in terms of math : 
+ 
+ - the input image features X (extracted by the EncoderCNN) and target captions Y with length T, the model learns to predict the sequence Y, computing the probability P(Y|X).
 
 ![decoder](images/decoder.png)
 
