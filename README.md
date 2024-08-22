@@ -336,7 +336,7 @@ attention_weights = attention_weights.sum(dim=1)
 ```python
 return alpha, attention_weights
 ```
-
+- read more about attention [here](https://lilianweng.github.io/posts/2018-06-24-attention/)
 
 # DecoderRNN: 
 
@@ -364,7 +364,29 @@ class DecoderRNN(nn.Module):
         self.lstm_cell = nn.LSTMCell(embed_size + encoder_dim, decoder_dim, bias=True)
         # fc layer for output
         self.fcn = nn.Linear(decoder_dim, self.embedding.num_embeddings)
+
         self.drop = nn.Dropout(drop_prob)
+    def forward(self, features, captions):
+       embeds = self.embedding(captions)
+       h, c = self.init_hidden_state(features)
+       seq_length = captions.size(1) - 1 
+       batch_size = captions.size(0)
+       num_features = features.size(1)
+       
+       # initialize tensors to store predictions and attention weights
+       preds = torch.zeros(batch_size, seq_length, self.embedding.num_embeddings).to(features.device)
+       alphas = torch.zeros(batch_size, seq_length, num_features).to(features.device)
+               
+       # generate sequence
+       for s in range(seq_length):
+           alpha, context = self.attention(features, h)
+           lstm_input = torch.cat((embeds[:, s], context), dim=1)
+           h, c = self.lstm_cell(lstm_input, (h, c))
+           output = self.fcn(self.drop(h))
+           preds[:, s] = output
+           alphas[:, s] = alpha  
+       
+       return preds, alphas
 ```
 
 - **Attention** : the attn is to focus on different parts of the image during caption generation.
@@ -385,32 +407,7 @@ this layer uses the BERT tokenizer's vocabulary, which is loaded from the bert-b
 
 ### Forward Pass
 
-```python
-def forward(self, features, captions):
-    embeds = self.embedding(captions)
-    h, c = self.init_hidden_state(features)
-    seq_length = captions.size(1) - 1 
-    batch_size = captions.size(0)
-    num_features = features.size(1)
-    
-    # initialize tensors to store predictions and attention weights
-    preds = torch.zeros(batch_size, seq_length, self.embedding.num_embeddings).to(features.device)
-    alphas = torch.zeros(batch_size, seq_length, num_features).to(features.device)
-            
-    # generate sequence
-    for s in range(seq_length):
-        alpha, context = self.attention(features, h)
-        lstm_input = torch.cat((embeds[:, s], context), dim=1)
-        h, c = self.lstm_cell(lstm_input, (h, c))
-        output = self.fcn(self.drop(h))
-        preds[:, s] = output
-        alphas[:, s] = alpha  
-    
-    return preds, alphas
-```
-
-
-**Input Shapes**:
+**Input**:
 
 - features: Shape (batch_size, num_features, encoder_dim) - > these are the encoded image features passed from the encoder.
 
