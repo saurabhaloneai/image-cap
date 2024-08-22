@@ -99,22 +99,22 @@ class ImageCaptionDataset(Dataset):
 
 **Input Flow in short:**
 
-- Image → EncoderCNN -> Image Features
+- 1. Image → EncoderCNN -> Image Features
 
-- Image Features -> Initialize Decoder States
+- 2. Image Features -> Initialize Decoder States
 
-- for each word position: 
+- 3. for each word position: 
 
-- Previous Word (or start token) -> Word Embedding
+   - Previous Word (or start token) -> Word Embedding
+   
+   - Current Hidden State + Image Features -> Attention -> Context Vector
+   
+   - Word Embedding + Context Vector -> LSTM Cell -> Updated Hidden State
+   
+   - Updated Hidden State -> Fully Connected Layer -> Word Prediction
 
-- Current Hidden State + Image Features -> Attention -> Context Vector
 
-- Word Embedding + Context Vector -> LSTM Cell -> Updated Hidden State
-
-- Updated Hidden State -> Fully Connected Layer -> Word Prediction
-
-
-Repeat step 3 until end token is predicted or maximum length is reached
+- repeat step 3 until end token is predicted or maximum length is reached.
 
 
 # EncoderCNN: 
