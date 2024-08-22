@@ -116,6 +116,7 @@ class ImageCaptionDataset(Dataset):
 
 repeat step 3 until end token is predicted or maximum length is reached.
 
+> i used the baseline arc from the [udacity course on computer vision](https://github.com/koles289/udacity-Image-Captioning)
 
 # EncoderCNN: 
 
@@ -542,7 +543,7 @@ why lstm for text read more [here](http://karpathy.github.io/2015/05/21/rnn-effe
   - decodes features to generate captions.
 
 
-** 
+
 
 # Training 
 
@@ -557,10 +558,8 @@ why lstm for text read more [here](http://karpathy.github.io/2015/05/21/rnn-effe
    decoder_dim=512
    learning_rate = 3e-4
    batch = 32
-
+   epochs = 100
 ```
-
-- for 100 epochs on 5k data points.
 
 - optim -> Adam and loss_fn - > CrossEntropyLoss.
 
@@ -573,7 +572,10 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 - dropout = 0.4/0.5 
 
-- didn't used any standard acc metric like BLEU score.
+- didn't used any standard accuracy metric like BLEU score.
+
+- the model got overfit -> curr i am training with few new addition to code like increasing dropout, learning_rate_shedular and gradietn clipping.
+
 
 
 # Inference 
@@ -606,6 +608,17 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # Reference 
 
+[1] Kelvin Xu, Jimmy Lei Ba, Ryan Kiros, Kyunghyun Cho, Aaron Courville, Ruslan Salakhutdinov, Richard S. Zemel, Yoshua Bengio. (April 19 2016). Show, Attend and Tell: Neural Image Caption Generation with Visual Attention.
 
+[2] Andrej Karpathy. (May 21 2105). The Unreasonable Effectiveness of Recurrent Neural Networks.
 
+[3] Lilian Weng. (June 24, 2018). Attention? Attention!
+
+[4] Sagar Vinodababu. A PyTorch Tutorial to Image Captioning.
+
+[5] Image Captioning with Attention by Artyom Makarov.
+
+[6] PyTorch DataLoader: Understand and implement custom collate function by Fabrizio Damicelli
+
+[7] Pytorch Image Captioning Tutorial(wihtout attention) by Aladdin Persson
 
