@@ -289,6 +289,8 @@ which represent the relevance of each feature for the current decoder hidden sta
 
 > Calculation of atten_score in detail :
 
+- Attention scores atten_score are calculated using the feed-forward network (notations can vary depending on the source and differ from the original paper):
+
 $score_{ij} = v_a^T \tanh(U_a h_{t-1} + W_a h_j)$
 
 - where:
@@ -303,7 +305,7 @@ $score_{ij} = v_a^T \tanh(U_a h_{t-1} + W_a h_j)$
 
 $$\alpha_{ij} = \frac{\exp(score_{ij})}{\sum_k \exp(score_{ik})}$$
 
-The context vector c_t is the weighted sum of the encoder output features:
+- The context vector c_t is the weighted sum of the encoder output features:
 
 $$c_t = \sum_j \alpha_{ij} h_j$$
 
