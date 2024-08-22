@@ -99,11 +99,11 @@ class ImageCaptionDataset(Dataset):
 
 **Input Flow in short:**
 
-- 1. Image → EncoderCNN -> Image Features
+1. Image → EncoderCNN -> Image Features
 
-- 2. Image Features -> Initialize Decoder States
+2. Image Features -> Initialize Decoder States
 
-- 3. for each word position: 
+3. for each word position: 
 
    - Previous Word (or start token) -> Word Embedding
    
@@ -114,7 +114,7 @@ class ImageCaptionDataset(Dataset):
    - Updated Hidden State -> Fully Connected Layer -> Word Prediction
 
 
-- repeat step 3 until end token is predicted or maximum length is reached.
+repeat step 3 until end token is predicted or maximum length is reached.
 
 
 # EncoderCNN: 
