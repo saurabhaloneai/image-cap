@@ -454,7 +454,7 @@ h, c = self.init_hidden_state(features)
     
     - c. lstm cell 
   
-    ```pyhton 
+    ```python 
     h, c = self.lstm_cell(lstm_input, (h, c))
     ```
     
@@ -481,11 +481,72 @@ h, c = self.init_hidden_state(features)
   
     - Each word of the caption is embedded and used as input for the next time step. This is known as teacher forcing.
     
+4. then for trainig the actual output will be used :
 
+```python 
+embeds = self.embedding(captions)
+```
+
+- each word of the caption is embedded and used as input for the next time step.
+
+5. output :
+
+```python
+return preds, alphas
+```
+- model returns the predictions and attention weights for the entire sequence:
+
+why lstm for text read more [here](http://karpathy.github.io/2015/05/21/rnn-effectiveness/).
+
+
+# The Complete Story 
+
+> class EncoderCNN
+
+- It uses a pre-trained ResNet50 model.
+
+-  parameters are frozen to use the pre-trained weights.
+- last two layers of ResNet are removed to get feature maps instead of classification output.
+- reshapes the output for attention mechanism (flattening spatial dimensions).
+
+> Attention class:
+
+-  we used Bahdanau attention.
+
+- It perform three linear layers to transform encoder features, decoder state, and combine them.
+- transforms features and hidden state.
+- combines them and applies tanh activation.
+- calculates attention scores and softmax to get attention weights.
+- applies attention weights to features to get the context vector.
+
+> DecoderRNN class:
+
+- init Attention module.
+
+- uses BERT tokenizer vocabulary for word embedding.
+- initi layers for hidden and cell states.
+- sets up LSTM cell and output layer.
+- for each word in the sequence:
+
+  - calculates attention and context.
+  - feeds embedding and context to LSTM.
+  -  generates output probabilities.
+  - stores predictions and attention weights.
+
+> EncoderDecoder class(last)
+
+- Init both encoder and decoder.
+
+- in the forward pass:
+  - encodes images to features.
+  - decodes features to generate captions.
+
+
+** 
 
 # Training 
 
-- i trained on two t4 from kaggle 
+- i trained on two t4 gpus from kaggle 
 
 - hyperparamters : 
 
@@ -495,9 +556,11 @@ h, c = self.init_hidden_state(features)
    encoder_dim=2048
    decoder_dim=512
    learning_rate = 3e-4
+   batch = 32
+
 ```
 
-- for 50 epochs on 5k data points.
+- for 100 epochs on 5k data points.
 
 - optim -> Adam and loss_fn - > CrossEntropyLoss.
 
@@ -507,27 +570,39 @@ criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 ```
+
+- dropout = 0.4/0.5 
+
+- didn't used any standard acc metric like BLEU score.
+
+
 # Inference 
 
-- i waste lots of time here.
+- i waste lots of time here.(i was trying to add beam search -> in the end i did not implement it)
 
-- but got it wokring in the end.
+- so there is two algo that i can implement to have the good ouptut result ex. greedy search or beam search 
 
-- didn't use beam search for inference.
+- short explantion of both : -> greedy search -> at each step choose the word with the highest probability. and beam search -> maintains top-k most probable sequences at each step. 
+
+- may be in future i will try this out 
+
 
 # heyyyyyyyyyyyyy hi 🐳 
 
 > [!NOTE]
 >
-> ... tbh i enjoyed building this and yeah will be building more stuff like this.
+> ... tbh i enjoyed building this and yeah will be building more stuff like this in future.
 > 
-> ... i learned lots stuff while building by spinning my head around lots of codebases, articles and papers.
+> ... i learned lots stuff while building by this ( all u need is good codebases, articles and papers.)
 >
 > ... but it was worth it.
 > 
+> ... rn i don't have any plan to improve this so this it.
+>
 > ... next goal will be to build image-cap with GPT2 and ViT and then with CLIP.
 > 
 > ... bye bye bye 🐳 !!! 
+
 
 # Reference 
 
