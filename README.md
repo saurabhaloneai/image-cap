@@ -713,7 +713,7 @@ def train(model, train_loader, test_loader, criterion, optimizer, num_epochs, to
 
 num_epochs = 100
 
-train(model, train_loader, criterion, optimizer, num_epochs, tokenizer)
+train(model, train_loader, test_loader criterion, optimizer, num_epochs, tokenizer)
 ```
 
 # Inference 
