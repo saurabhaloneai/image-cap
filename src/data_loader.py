@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch.nn as nn
 from PIL import Image
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, Subset
+
 
 class ImageCaptionDataset(Dataset):
     def __init__(self, root_dir, captions_file, tokenizer, transform=None):
@@ -63,8 +66,17 @@ captions_file = '/kaggle/input/flickr8k/captions.txt'
 dataset = ImageCaptionDataset(root_dir=root_dir, captions_file=captions_file, tokenizer=tokenizer, transform=transform)
 
 # a subset of the dataset with 5000 samples
-subset_indices = list(range(5000))
+subset_indices = list(range(6000))
 subset = Subset(dataset, subset_indices)
 
-# DataLoader
-train_loader = DataLoader(subset, batch_size=32, shuffle=True, num_workers=4, collate_fn=custom_collate_fn)
+train_size = int(0.8 * len(subset_indices))
+test_size = len(subset_indices) - train_size
+
+train_indices, test_indices = train_test_split(subset_indices, train_size=train_size, test_size=test_size, random_state=42)
+
+train_subset = Subset(dataset, train_indices)
+test_subset = Subset(dataset, test_indices)
+
+# Create DataLoaders
+train_loader = DataLoader(train_subset, batch_size=32, shuffle=True, num_workers=4, collate_fn=custom_collate_fn)
+test_loader = DataLoader(test_subset, batch_size=32, shuffle=False, num_workers=4, collate_fn=custom_collate_fn)

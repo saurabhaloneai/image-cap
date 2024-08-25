@@ -31,6 +31,8 @@ criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
 optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
 scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
 
+
+
 def train(model, train_loader, test_loader, criterion, optimizer, num_epochs, tokenizer):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -40,10 +42,13 @@ def train(model, train_loader, test_loader, criterion, optimizer, num_epochs, to
         print(f"Using {torch.cuda.device_count()} GPUs")
         model = DataParallel(model)
     
-    # mixed precision training setup
-    scaler = GradScaler()
+    # Initialize the ReduceLROnPlateau scheduler
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
+    
     print_every = 150
-    best_loss = float('inf')
+    
+    # Create a directory to store checkpoints
+    os.makedirs('checkpoints', exist_ok=True)
     
     for epoch in range(1, num_epochs + 1):
         model.train()
@@ -56,16 +61,12 @@ def train(model, train_loader, test_loader, criterion, optimizer, num_epochs, to
             
             optimizer.zero_grad()
             
-            # autocast for mixed precision
-            with autocast():
-                outputs, _ = model(image, captions)
-                targets = captions[:, 1:]  # shifted target for teacher forcing
-                loss = criterion(outputs.view(-1, tokenizer.vocab_size), targets.reshape(-1))
+            outputs, _ = model(image, captions)
+            targets = captions[:, 1:]  # shifted target for teacher forcing
+            loss = criterion(outputs.view(-1, tokenizer.vocab_size), targets.reshape(-1))
             
-            # backpropagation with scaling
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            loss.backward()
+            optimizer.step()
             
             running_loss += loss.item()
             
@@ -92,10 +93,9 @@ def train(model, train_loader, test_loader, criterion, optimizer, num_epochs, to
         with torch.inference_mode():
             for image, captions in test_loader:
                 image, captions = image.to(device), captions.to(device)
-                with autocast():
-                    outputs, _ = model(image, captions)
-                    targets = captions[:, 1:]
-                    loss = criterion(outputs.view(-1, tokenizer.vocab_size), targets.reshape(-1))
+                outputs, _ = model(image, captions)
+                targets = captions[:, 1:]
+                loss = criterion(outputs.view(-1, tokenizer.vocab_size), targets.reshape(-1))
                 test_loss += loss.item()
                 
                 _, predicted = outputs.max(2)
@@ -107,15 +107,16 @@ def train(model, train_loader, test_loader, criterion, optimizer, num_epochs, to
         test_accuracy = test_correct / test_total
         print(f"Epoch: {epoch}/{num_epochs}, Test Loss: {avg_test_loss:.5f}, Test Accuracy: {test_accuracy:.5f}")
         
-        # save the model 
-        if avg_test_loss < best_loss:
-            best_loss = avg_test_loss
-            
-            if isinstance(model, DataParallel):
-                torch.save(model.module.state_dict(), "model_weights.pth")
-            else:
-                torch.save(model.state_dict(), "model_weights.pth")
-            print(f"Model saved at epoch {epoch}")
+        # Step the scheduler
+        scheduler.step(avg_test_loss)
+        
+        # Save model weights at every epoch
+        if isinstance(model, DataParallel):
+            torch.save(model.module.state_dict(), f"checkpoints/model_weights_epoch_{epoch}.pth")
+        else:
+            torch.save(model.state_dict(), f"checkpoints/model_weights_epoch_{epoch}.pth")
+        print(f"Model weights saved for epoch {epoch}")
+        
 # Train the model
 num_epochs = 100
 train(model, train_loader, test_loader, criterion, optimizer, num_epochs, tokenizer)
