@@ -832,7 +832,7 @@ plt.show()
 >
 > ... next goal will be to build image-cap with GPT2 and ViT and then with CLIP.
 > 
-> ... bye bye bye 🐳 !!! 
+> ... thanks, bye bye bye 🐳 !!! 
 
 
 # Reference 
